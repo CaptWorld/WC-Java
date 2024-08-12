@@ -1,7 +1,5 @@
 package org.capt.world.counters;
 
-import java.util.regex.Pattern;
-
 public class LineCounter implements Counter {
     private int count = 0;
     private boolean hasCarriageReturn = false;

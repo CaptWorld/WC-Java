@@ -1,8 +1,5 @@
 package org.capt.world.counters;
 
-import java.io.InputStream;
-import java.util.Scanner;
-
 public class WordCounter implements Counter {
     private long count = 0;
     private boolean hasWhitespaceCharacter = true;

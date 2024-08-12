@@ -2,7 +2,6 @@ package org.capt.world;
 
 import org.capt.world.counters.*;
 
-import java.io.InputStream;
 import java.util.*;
 
 public enum CommandLineOption {
