@@ -11,12 +11,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 
-// TODO: Multiple files so different counters
-// TODO: Modularize better
-// TODO: Improve README.md
-// TODO: Add Tests using JUnit
-// TODO: (optional) Binary Executable creation steps
-
 public class Main {
 
     /**
