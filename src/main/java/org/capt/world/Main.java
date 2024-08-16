@@ -1,5 +1,7 @@
 package org.capt.world;
 
+import org.capt.world.counters.Counter;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +12,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class Main {
 
@@ -44,6 +47,56 @@ public class Main {
      */
 
     public static void main(String[] args) {
+        ParsedArgs parsedArgs = parseArgs(args);
+
+        List<String> files = parsedArgs.inputs();
+        Set<CommandLineOption> options = parsedArgs.options();
+
+        List<InputStream> inputStreams = files.stream().map(Main::getInputStream).toList();
+        if (inputStreams.isEmpty()) {
+            inputStreams = List.of(System.in);
+        }
+
+        long[] counts = options.stream().mapToLong(x -> 0).toArray();
+
+        for (InputStream in : inputStreams) {
+            Counter[] counters = options.stream().map(CommandLineOption::counter).toArray(Counter[]::new);
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+                char highSurrogate = 0;
+                int intCh;
+                while ((intCh = reader.read()) != -1) {
+                    int codepoint = -1;
+                    char ch = (char) intCh;
+                    if (Character.isHighSurrogate(ch)) {
+                        highSurrogate = ch;
+                    } else if (Character.isLowSurrogate(ch)) {
+                        codepoint = Character.toCodePoint(highSurrogate, ch);
+                    } else {
+                        codepoint = intCh;
+                    }
+                    if (codepoint != -1) {
+                        for (Counter counter : counters) {
+                            counter.update(codepoint);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create BufferedReader from InputStream", e);
+            }
+
+            for (int i = 0; i < counters.length; i++) {
+                counts[i] += counters[i].count();
+            }
+        }
+
+        for (var count : counts) {
+            System.out.print(count + " ");
+        }
+        System.out.println(files.size() == 1 ? files.getFirst() : "");
+    }
+
+    private static ParsedArgs parseArgs(String[] args) {
         LinkedHashSet<CommandLineOption> options = new LinkedHashSet<>();
         List<String> files = new LinkedList<>();
         for (int i = 0; i < args.length; ) {
@@ -60,44 +113,13 @@ public class Main {
             i++;
         }
 
-        List<InputStream> inputStreams = files.stream().map(Main::getInputStream).toList();
-        if (inputStreams.isEmpty()) {
-            inputStreams = List.of(System.in);
-        }
+
 
         if (options.isEmpty()) {
             options = new LinkedHashSet<>(List.of(CommandLineOption.LINES, CommandLineOption.WORDS, CommandLineOption.BYTES));
         }
 
-        for (var in : inputStreams) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
-                char highSurrogate = 0;
-                int intCh;
-                while ((intCh = reader.read()) != -1) {
-                    int codepoint = -1;
-                    char ch = (char) intCh;
-                    if (Character.isHighSurrogate(ch)) {
-                        highSurrogate = ch;
-                    } else if (Character.isLowSurrogate(ch)) {
-                        codepoint = Character.toCodePoint(highSurrogate, ch);
-                    } else {
-                        codepoint = intCh;
-                    }
-                    if (codepoint != -1) {
-                        for (var option : options) {
-                            option.counter().update(codepoint);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to create BufferedReader from InputStream", e);
-            }
-        }
-
-        for (var option : options) {
-            System.out.print(option.counter().count() + " ");
-        }
-        System.out.println(files.size() == 1 ? files.getFirst() : "");
+        return new ParsedArgs(options, files);
     }
 
     public static InputStream getInputStream(String fileName) {
@@ -120,4 +142,6 @@ public class Main {
             throw new RuntimeException("Failed to read from file: " + filePath, e);
         }
     }
+
+    record ParsedArgs(LinkedHashSet<CommandLineOption> options, List<String> inputs) {}
 }

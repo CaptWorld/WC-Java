@@ -2,14 +2,15 @@ package org.capt.world;
 
 import org.capt.world.counters.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public enum CommandLineOption {
 
-    BYTES(new ByteCounter(), "-c", "--bytes"),
-    LINES(new LineCounter(), "-l", "--lines"),
-    WORDS(new WordCounter(), "-w", "--words"),
-    CHARACTERS(new CharacterCounter(), "-m", "--chars");
+    BYTES(ByteCounter.class, "-c", "--bytes"),
+    LINES(LineCounter.class, "-l", "--lines"),
+    WORDS(WordCounter.class, "-w", "--words"),
+    CHARACTERS(CharacterCounter.class, "-m", "--chars");
 
     private final static Map<String, CommandLineOption> OPTION_MAPPING = new HashMap<>();
 
@@ -23,11 +24,11 @@ public enum CommandLineOption {
         }
     }
 
-    private final Counter counter;
+    private final Class<? extends Counter> counterClass;
     private final String[] optionStrings;
 
-    CommandLineOption(Counter counter, String... optionStrings) {
-        this.counter = counter;
+    CommandLineOption(Class<? extends Counter> counterClass, String... optionStrings) {
+        this.counterClass = counterClass;
         if (optionStrings == null) {
             throw new RuntimeException("No strings for the option is provided");
         } else if (optionStrings.length > 2) {
@@ -43,7 +44,12 @@ public enum CommandLineOption {
     }
 
     public Counter counter() {
-        return counter;
+        try {
+            return counterClass.getDeclaredConstructor().newInstance();
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException |
+                 IllegalAccessException e) {
+            throw new RuntimeException("Failed to create instance of class: " + counterClass.getSimpleName(), e);
+        }
     }
 
     public static LinkedHashSet<CommandLineOption> getEnums(String optionString) {
