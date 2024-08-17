@@ -35,8 +35,7 @@ public enum CommandLineOption {
             throw new RuntimeException(
                     String.format(
                             "Too many strings: %s for the option is provided",
-                            Arrays.toString(optionStrings
-                            )
+                            Arrays.toString(optionStrings)
                     )
             );
         }
