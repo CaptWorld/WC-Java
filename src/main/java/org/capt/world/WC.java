@@ -1,18 +1,17 @@
 package org.capt.world;
 
-import java.io.InputStream;
+import java.util.List;
 
 public class WC {
     public static void main(String[] args) {
         ParsedArgs parsedArgs = ParsedArgs.parse(args);
 
-        InputStream[] inputStreams = Utils.getInputStreams(parsedArgs.files());
+        List<WCInput> wcInputs = Utils.getInputStreams(parsedArgs.files());
 
-        long[] counts = Utils.count(parsedArgs.options(), inputStreams);
+        List<WCOutput> wcOutputs = Utils.countMultipleInput(parsedArgs.options(), wcInputs);
 
-        for (var count : counts) {
-            System.out.print(count + " ");
+        for (WCOutput wcOutput : wcOutputs) {
+            System.out.println(wcOutput);
         }
-        System.out.println(parsedArgs.files().length == 1 ? parsedArgs.files()[0] : "");
     }
 }

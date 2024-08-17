@@ -10,18 +10,21 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Utils {
 
-    public static InputStream[] getInputStreams(String[] files) {
-        if (files.length == 0) {
-            return new InputStream[]{System.in};
+    public static List<WCInput> getInputStreams(List<String> files) {
+        if (files.isEmpty()) {
+            return List.of(new WCInput("", System.in));
         } else {
-            return Arrays.stream(files).map(Utils::getInputStream).toArray(InputStream[]::new);
+            return files.stream().map(file -> new WCInput(file, Utils.getInputStream(file))).toList();
         }
     }
 
-    private static InputStream getInputStream(String fileName) {
+    public static InputStream getInputStream(String fileName) {
         if (fileName.equals("-")) {
             return System.in;
         }
@@ -40,6 +43,20 @@ public class Utils {
         } catch (IOException e) {
             throw new RuntimeException("Failed to read from file: " + filePath, e);
         }
+    }
+
+    public static List<WCOutput> countMultipleInput(Set<CommandLineOption> options, List<WCInput> wcInputs) {
+        List<WCOutput> wcOutputs = wcInputs.stream().map(wcInput -> Utils.countSingleInput(options, wcInput)).collect(Collectors.toList());
+        if (wcOutputs.size() > 1) {
+            long[] totalCount = new long[wcOutputs.getFirst().counts().length];
+            for (WCOutput wcOutput : wcOutputs) {
+                for (int i = 0; i < totalCount.length; i++) {
+                    totalCount[i] += wcOutput.counts()[i];
+                }
+            }
+            wcOutputs.add(new WCOutput("total", totalCount));
+        }
+        return wcOutputs;
     }
 
     /**
@@ -71,40 +88,39 @@ public class Utils {
      * Supplementary char example -> 6 bytes
      * </p>
      */
-    public static long[] count(CommandLineOption[] options, InputStream[] inputStreams) {
-        long[] counts = new long[options.length];
+    private static WCOutput countSingleInput(Set<CommandLineOption> options, WCInput wcInput) {
+        long[] counts = new long[options.size()];
 
-        for (InputStream in : inputStreams) {
-            Counter[] counters = Arrays.stream(options).map(CommandLineOption::counter).toArray(Counter[]::new);
+        Counter[] counters = options.stream().map(CommandLineOption::counter).toArray(Counter[]::new);
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
-                char highSurrogate = 0;
-                int intCh;
-                while ((intCh = reader.read()) != -1) {
-                    int codepoint = -1;
-                    char ch = (char) intCh;
-                    if (Character.isHighSurrogate(ch)) {
-                        highSurrogate = ch;
-                    } else if (Character.isLowSurrogate(ch)) {
-                        codepoint = Character.toCodePoint(highSurrogate, ch);
-                    } else {
-                        codepoint = intCh;
-                    }
-                    if (codepoint != -1) {
-                        for (Counter counter : counters) {
-                            counter.update(codepoint);
-                        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(wcInput.inputStream()))) {
+            char highSurrogate = 0;
+            int intCh;
+            while ((intCh = reader.read()) != -1) {
+                int codepoint = -1;
+                char ch = (char) intCh;
+                if (Character.isHighSurrogate(ch)) {
+                    highSurrogate = ch;
+                } else if (Character.isLowSurrogate(ch)) {
+                    codepoint = Character.toCodePoint(highSurrogate, ch);
+                } else {
+                    codepoint = intCh;
+                }
+                if (codepoint != -1) {
+                    for (Counter counter : counters) {
+                        counter.update(codepoint);
                     }
                 }
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to create BufferedReader from InputStream", e);
             }
-
-            for (int i = 0; i < counters.length; i++) {
-                counts[i] += counters[i].count();
-            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create BufferedReader from InputStream", e);
         }
 
-        return counts;
+        for (int i = 0; i < counters.length; i++) {
+            counts[i] = counters[i].count();
+        }
+
+        Arrays.sort(counts);
+        return new WCOutput(wcInput.fileName(), counts);
     }
 }

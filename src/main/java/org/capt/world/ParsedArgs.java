@@ -1,14 +1,15 @@
 package org.capt.world;
 
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public record ParsedArgs(CommandLineOption[] options, String[] files) {
+public record ParsedArgs(Set<CommandLineOption> options, List<String> files) {
 
     public static ParsedArgs parse(String[] args) {
-        LinkedHashSet<CommandLineOption> optionsSet = new LinkedHashSet<>();
-        List<String> files = new LinkedList<>();
+        Set<CommandLineOption> options = new HashSet<>();
+        List<String> files = new ArrayList<>();
         for (int i = 0; i < args.length; ) {
             var parsedOptions = CommandLineOption.getEnums(args[i]);
             if (parsedOptions.isEmpty()) {
@@ -18,24 +19,20 @@ public record ParsedArgs(CommandLineOption[] options, String[] files) {
                     files.add(args[i]);
                 }
             } else {
-                optionsSet.addAll(parsedOptions);
+                options.addAll(parsedOptions);
             }
             i++;
         }
 
-        CommandLineOption[] options;
-
-        if (optionsSet.isEmpty()) {
-            options = new CommandLineOption[]{
+        if (options.isEmpty()) {
+            options = Set.of(
                     CommandLineOption.LINES,
                     CommandLineOption.WORDS,
                     CommandLineOption.BYTES
-            };
-        } else {
-            options = optionsSet.toArray(CommandLineOption[]::new);
+            );
         }
 
-        return new ParsedArgs(options, files.toArray(String[]::new));
+        return new ParsedArgs(options, files);
     }
 
 }
