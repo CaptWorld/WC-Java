@@ -121,6 +121,9 @@ public class Utils {
         }
 
         Arrays.sort(counts);
+        if (wcInput.inputStream() == System.in) {
+            System.out.println("EOF is reached for Console Input");
+        }
         return new WCOutput(wcInput.fileName(), counts);
     }
 }

@@ -1,6 +1,7 @@
 package org.capt.world;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public record WCOutput(String fileName, long[] counts) {
     public WCOutput {
@@ -9,6 +10,19 @@ public record WCOutput(String fileName, long[] counts) {
                 throw new RuntimeException("counts: " + Arrays.toString(counts) + " is not sorted");
             }
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        WCOutput wcOutput = (WCOutput) o;
+        return Objects.deepEquals(counts, wcOutput.counts) && Objects.equals(fileName, wcOutput.fileName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fileName, Arrays.hashCode(counts));
     }
 
     @Override

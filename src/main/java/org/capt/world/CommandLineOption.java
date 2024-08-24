@@ -51,12 +51,12 @@ public enum CommandLineOption {
         }
     }
 
-    public static LinkedHashSet<CommandLineOption> getEnums(String optionString) {
-        LinkedHashSet<CommandLineOption> options = new LinkedHashSet<>();
+    public static Set<CommandLineOption> getEnums(String optionString) {
+        Set<CommandLineOption> options = new HashSet<>();
         var option = CommandLineOption.OPTION_MAPPING.get(optionString);
         if (option == null) {
             if (optionString.startsWith("-") && !optionString.startsWith("--")) {
-                List<String> optionStrings = parseMultipleOptions(optionString);
+                Set<String> optionStrings = parseMultipleOptions(optionString);
                 for (var opString : optionStrings) {
                     option = CommandLineOption.OPTION_MAPPING.get(opString);
                     if (option == null) {
@@ -72,8 +72,8 @@ public enum CommandLineOption {
         return options;
     }
 
-    private static List<String> parseMultipleOptions(String optionString) {
-        List<String> optionStrings = new ArrayList<>();
+    private static Set<String> parseMultipleOptions(String optionString) {
+        Set<String> optionStrings = new HashSet<>();
         for (int i = 1; i < optionString.length(); i++) {
             optionStrings.add("-" + optionString.charAt(i));
         }

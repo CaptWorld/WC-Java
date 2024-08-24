@@ -3,7 +3,9 @@ My java implementation of wc tool, as mentioned in this [post](https://codingcha
 
 ### TODO
 - <strike>Handle Multiple input files
-- Better modularization so that it looks cleaner</strike>
-- Add Tests using JUnit
+- Better modularization so that it looks cleaner
+- Add Tests using JUnit</strike>
+- Add help to the tool
+- Handle multiple console inputs
 - Improve README.md
 - (optional) Mention steps to create binary executable

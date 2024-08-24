@@ -10,18 +10,18 @@ public record ParsedArgs(Set<CommandLineOption> options, List<String> files) {
     public static ParsedArgs parse(String[] args) {
         Set<CommandLineOption> options = new HashSet<>();
         List<String> files = new ArrayList<>();
-        for (int i = 0; i < args.length; ) {
-            var parsedOptions = CommandLineOption.getEnums(args[i]);
+
+        for (String arg : args) {
+            Set<CommandLineOption> parsedOptions = CommandLineOption.getEnums(arg);
             if (parsedOptions.isEmpty()) {
-                if (args[i].startsWith("-")) {
-                    throw new RuntimeException("Unknown option: " + args[i]);
+                if (arg.startsWith("-") && !arg.equals("-")) {
+                    throw new RuntimeException("Unknown option: " + arg);
                 } else {
-                    files.add(args[i]);
+                    files.add(arg);
                 }
             } else {
                 options.addAll(parsedOptions);
             }
-            i++;
         }
 
         if (options.isEmpty()) {
